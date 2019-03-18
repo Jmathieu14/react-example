@@ -10,18 +10,24 @@ class Tag {
         this.isFolder = false;
         this.parent = my_props.parent;
         this.ancestors = my_props.ancestors;
+        // Whether or not this folder/tag should be displayed
+        this.display = " hide";
     }
     // add an ancestor to the list
     addAncestor(aID) {
         if (this.ancestors === null) {
             this.ancestors = [];
         }
-        this.ancestors.push(aID);
+        if (!this.ancestors.includes(aID)) {
+            this.ancestors.push(aID);
+        }
     }
     // set tag's parent
     setParent(pID) {
-        this.parent = pID;
-        this.addAncestor(pID);
+        if (pID !== null) {
+            this.parent = pID;
+            this.addAncestor(pID);          
+        }
     }
     // toggle isFolder to true
     toggleToFolder() {
@@ -33,18 +39,16 @@ class Tag {
     }
 }
 
-//const testProps = {"name":"test", "isFolder":true};
-
-const my_folders = [["f1", ["f1-1", "f1-2"]], "f2", "f3"];
-
+// Basic folder structure to interpret
+const my_folders = [["f1", ["f1-1", "f1-2", ["f1-2-1"]]], "f2", "f3"];
+// Readable format of folder structure, made of a list of tags
 let completed_folders_arr = [];
-
 
 // Given the list of tags, toggle the 'isFolder' parameter to true for the Tag with the matching ID
 function toggleToFolderMatchingTagID(listOfTags, tID) {
     const cap = listOfTags.length;
     for (let y = 0; y < cap; ++y) {
-        let myTag = listOfTags[y];
+        const myTag = listOfTags[y];
         if (myTag._id === tID) {
             myTag.toggleToFolder();
             break;
@@ -55,7 +59,7 @@ function toggleToFolderMatchingTagID(listOfTags, tID) {
 // Take the most basic representation of a folder
 // structure and convert it to a list of Tags
 function basicListToClassList(basicList, classList) {
-    return basicListToClassListHelper(true, null, null, basicList, classList);
+    return basicListToClassListHelper(true, null, [], basicList, classList);
 }
 
 // Helper function for basicList to classList function
@@ -66,24 +70,21 @@ function basicListToClassListHelper(isRoot, parentID, ancestorsIDlist, basicList
     }
     for (let x = 0; x < cap; ++x) {
         const item = basicList[x];
-        console.log(item);
-        console.log(typeof(item));
         if (typeof(item) !== "string") {
-            if (typeof(item[0]) === "string") {
-                return basicListToClassListHelper(false, parentID, ancestorsIDlist, item, classList);
-            } else {
-                console.log("Error in given basic folder list. Missing parent folder.");
-                console.log("Error on " + toString(item))
-            }
+            classList = basicListToClassListHelper(false, parentID, ancestorsIDlist, item, classList);
         } else {
             let localPID = null;
             if (!isRoot) {
                 localPID = parentID;
             }
-            const itemProps = {"name":item, "parent":localPID, "ancestors":ancestorsIDlist};
+            const itemProps = {"name":item,"ancestors":ancestorsIDlist};
             const itemAsTag = new Tag(itemProps);
+            itemAsTag.setParent(localPID);
             classList.push(itemAsTag);
-            parentID = itemAsTag._id;
+            if (x + 1 < cap && typeof(basicList[x + 1]) !== "string") {
+                parentID = itemAsTag._id;
+                ancestorsIDlist.push(itemAsTag._id);
+            }
         }
     }
     return classList;
@@ -91,14 +92,26 @@ function basicListToClassListHelper(isRoot, parentID, ancestorsIDlist, basicList
 
 completed_folders_arr = basicListToClassList(my_folders, completed_folders_arr);
 
+// Quickly set display values of completed Tag list
+for (let i = 0; i < completed_folders_arr.length; ++i) {
+    const myTag = completed_folders_arr[i];
+    if (myTag.parent === undefined) {
+        myTag.display = " show";
+    }
+}
+
+// Show a quick preview of our tags list
 console.log(completed_folders_arr);
 
 
 // Folder component
 class Folder extends React.Component {
+    constructor(props) {
+        super(props);
+    }
     render() {
         return(
-          <div className="folder">
+          <div className={"folder"+this.props.display}>
             <div className="folder-title">
               {this.props.name}
             </div>
@@ -109,14 +122,14 @@ class Folder extends React.Component {
 
 // The folder list component
 class FolderList extends React.Component {
-  constructor(props) {
-    super(props);
-    this.tags = this.props.tags;
-  }
+    constructor(props) {
+        super(props);
+        this.tags = this.props.tags;
+    }
     render() {
         // Map each folder name to a folder
         const folders = this.props.tags.map((tag) => 
-          <Folder name={tag} />);
+          <Folder name={tag.name} display={tag.display} />);
         return(
           <div className="folderlist">
             <div className="fl-title">Folder List</div>
@@ -151,11 +164,10 @@ class Tabber extends React.Component {
 export default class Home extends Component {
 
   render() {
-    console.log(my_folders);
     return (
       <section className="container home">
         <Tabber
-          name="Ye Tabber" tags={my_folders}
+          name="Ye Tabber" tags={completed_folders_arr}
         />
       </section>
     );
