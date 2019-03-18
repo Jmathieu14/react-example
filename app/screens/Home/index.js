@@ -52,6 +52,27 @@ class Tag {
         }
         tagE.className = myClassName;
     }
+    // set display to specific state
+    setDisplay(newState) {
+        // Get js reference to html element and change css
+        // class name accordingly
+        const tagE = document.getElementById(this._id);
+        console.log(tagE);
+        if (tagE !== null) {
+            let myClassName = tagE.className;
+            // Remove hide or show class tag
+            myClassName = myClassName.substr(0, myClassName.length - 5);
+            if (newState === " show") {
+                this.display = " show";
+                myClassName += " show";
+            } else {
+                this.display = " hide";
+                myClassName += " hide";
+            }
+            tagE.className = myClassName;
+        }
+    }
+    
 }
 
 // Basic folder structure to interpret
@@ -226,11 +247,22 @@ class Tabber extends React.Component {
     super(props);
     this.tags = this.props.tags;
   }
+    // Reset view to root folders
+    backToRoot() {
+        for (var x = 0; x < this.tags.length; ++x) {
+            let myTag = this.tags[x];
+            if (myTag.parentID === null) {
+                myTag.setDisplay(" show");
+            } else {
+                myTag.setDisplay(" hide");
+            }
+        }
+    }
     render() {
         return(
           <div className="tabber">
             <div className="tabber-title"> {this.props.name}
-              <button className="back-btn ">Back</button>
+              <button onclick={this.backToRoot()} className="back-btn ">Back</button>
             </div>
             <FolderList tags={this.props.tags} />
           </div>
