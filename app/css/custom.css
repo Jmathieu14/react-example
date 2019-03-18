@@ -43,3 +43,16 @@ section.home {
     cursor: pointer;
     user-select: none;
 }
+
+/* Back button */
+.back-btn.hide {
+    display: none;
+}
+
+.back-btn {
+    display: block;
+    position: relative;
+    float: right;
+    font-size: 0.8em;
+    right: 0.3em;
+}

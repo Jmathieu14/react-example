@@ -41,7 +41,7 @@ class Tag {
     toggleDisplay() {
         // Get js reference to html element and change css
         // class name accordingly
-        let tagE = document.getElementById(this._id);
+        const tagE = document.getElementById(this._id);
         let myClassName = tagE.className;
         if (this.display === " hide") {
             this.display = " show";
@@ -121,9 +121,9 @@ console.log(completed_folders_arr);
 // Get list of immediate children IDs of specified parent, if given 
 // parent ID is indeed a parent and in the classList array
 function getImmediateChildren(pID, classList) {
-    let returnArr = [];
+    const returnArr = [];
     for (let z = 0; z < classList.length; ++z) {
-        childTag = classList[z];
+        const childTag = classList[z];
         if (childTag.parent === pID) {
             returnArr.push(childTag._id);
         }
@@ -137,10 +137,10 @@ function getImmediateChildren(pID, classList) {
 
 // get hidden parent folders
 function getHiddenParents(classList) {
-    let returnArr = [];
+    const returnArr = [];
     for (let z = 0; z < classList.length; ++z) {
-        let myTag = classList[z];
-        let myChildren = getImmediateChildren(myTag._id, classList);
+        const myTag = classList[z];
+        const myChildren = getImmediateChildren(myTag._id, classList);
         
         if (myChildren !== null && myTag.display === " hide") {
             returnArr.push(myTag._id);
@@ -151,6 +151,17 @@ function getHiddenParents(classList) {
         return null;
     }
     return returnArr;
+}
+
+// Toggle display for each id that matches those in the classList
+function toggleMatching(idList, classList) {
+    for (let x = 0; x < idList.length; ++x) {
+        for (let y = 0; y < classList.length; ++y) {
+            if (idList[x] === classList[y]._id) {
+                classList[y].toggleDisplay();
+            }
+        }
+    }
 }
 
 // Folder component
@@ -185,13 +196,10 @@ class FolderList extends React.Component {
     onTagSelectionChange = () => {
         const hiddenParents = getHiddenParents(this.tags);
         if (hiddenParents !== null) {
-            for (var i = 0; i < hiddenParents.length; ++i) {
+            for (let i = 0; i < hiddenParents.length; ++i) {
                 const myChildren = getImmediateChildren(hiddenParents[i], this.tags);
                 if (myChildren !== null) {
-                    for (var j = 0; j < myChildren.length; ++j) {
-                        myChildren[j].toggleDisplay();
-                        console.log(myChildren[j]);
-                    }
+                    toggleMatching(myChildren, this.tags);
                 }
             }
         }
@@ -199,9 +207,9 @@ class FolderList extends React.Component {
     render() {
         // Map each folder name to a folder
         const folders = this.props.tags.map((tag) => 
-          <Folder tag={tag} onClick={this.onTagSelectionChange} />);
+          <Folder tag={tag} />);
         return(
-          <div className="folderlist">
+          <div className="folderlist" onClick={this.onTagSelectionChange}>
             <div className="fl-title">Folder List</div>
             <ul>
               {folders}
@@ -222,6 +230,7 @@ class Tabber extends React.Component {
         return(
           <div className="tabber">
             <div className="tabber-title"> {this.props.name}
+              <button className="back-btn ">Back</button>
             </div>
             <FolderList tags={this.props.tags} />
           </div>
