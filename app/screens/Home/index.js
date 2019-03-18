@@ -37,6 +37,14 @@ class Tag {
     toggleToTag() {
         this.isFolder = false;
     }
+    // toggle display value of folder/tag
+    toggleDisplay() {
+        if (this.display === " hide") {
+            this.display = " show";
+        } else {
+            this.display = " hide";
+        }
+    }
 }
 
 // Basic folder structure to interpret
@@ -103,15 +111,35 @@ for (let i = 0; i < completed_folders_arr.length; ++i) {
 // Show a quick preview of our tags list
 console.log(completed_folders_arr);
 
+// Get list of immediate children IDs of specified parent, if given 
+// parent ID is indeed a parent and in the classList array
+function getImmediateChildren(pID, classList) {
+    let returnArr = [];
+    for (let z = 0; z < classList.length; ++z) {
+        childTag = classList[z];
+        if (childTag.parent === pID) {
+            returnArr.push(childTag._id);
+        }
+    }
+    // If the returnArr is empty, return null
+    if (returnArr === []) {
+        return null;
+    }
+    return returnArr;
+}
 
 // Folder component
 class Folder extends React.Component {
     constructor(props) {
         super(props);
+        this.tag = this.props.tag;
+    }
+    fToggleDisplay = () => {
+        this.tag.toggleDisplay();
     }
     render() {
         return(
-          <div className={"folder"+this.props.display}>
+          <div className={"folder"+this.tag.display}>
             <div className="folder-title">
               {this.props.name}
             </div>
@@ -125,11 +153,16 @@ class FolderList extends React.Component {
     constructor(props) {
         super(props);
         this.tags = this.props.tags;
+        this.folderE = React.createRef();
+    }
+    // function that changes selection based on given tag
+    onTagSelectionChange = () => {
+        this.folderE.current.fToggleDisplay();
     }
     render() {
         // Map each folder name to a folder
         const folders = this.props.tags.map((tag) => 
-          <Folder name={tag.name} display={tag.display} />);
+          <Folder ref={this.folderE} name={tag.name} display={tag.display} onClick={this.onTagSelectionChange} />);
         return(
           <div className="folderlist">
             <div className="fl-title">Folder List</div>
@@ -162,11 +195,14 @@ class Tabber extends React.Component {
 
 // The main page
 export default class Home extends Component {
+    constructor(props) {
+        super(props);
+    }
 
   render() {
     return (
       <section className="container home">
-        <Tabber
+        <Tabber 
           name="Ye Tabber" tags={completed_folders_arr}
         />
       </section>
