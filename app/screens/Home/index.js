@@ -39,11 +39,18 @@ class Tag {
     }
     // toggle display value of folder/tag
     toggleDisplay() {
+        // Get js reference to html element and change css
+        // class name accordingly
+        let tagE = document.getElementById(this._id);
+        let myClassName = tagE.className;
         if (this.display === " hide") {
             this.display = " show";
+            myClassName = myClassName.replace(" hide", " show");
         } else {
             this.display = " hide";
+            myClassName = myClassName.replace(" show", " hide");
         }
+        tagE.className = myClassName;
     }
 }
 
@@ -128,20 +135,40 @@ function getImmediateChildren(pID, classList) {
     return returnArr;
 }
 
+// get hidden parent folders
+function getHiddenParents(classList) {
+    let returnArr = [];
+    for (let z = 0; z < classList.length; ++z) {
+        let myTag = classList[z];
+        let myChildren = getImmediateChildren(myTag._id, classList);
+        
+        if (myChildren !== null && myTag.display === " hide") {
+            returnArr.push(myTag._id);
+        }
+    }
+    // If the returnArr is empty, return null
+    if (returnArr === []) {
+        return null;
+    }
+    return returnArr;
+}
+
 // Folder component
 class Folder extends React.Component {
     constructor(props) {
         super(props);
         this.tag = this.props.tag;
     }
-    fToggleDisplay = () => {
+    onTagSelectionChange = () => {
         this.tag.toggleDisplay();
+        console.log(this.tag.display);
+        this.render();
     }
     render() {
         return(
-          <div className={"folder"+this.tag.display}>
+          <div id={this.tag._id} className={"folder"+this.tag.display} onClick={this.onTagSelectionChange} role="button">
             <div className="folder-title">
-              {this.props.name}
+              {this.tag.name}
             </div>
           </div>
         );
@@ -153,16 +180,26 @@ class FolderList extends React.Component {
     constructor(props) {
         super(props);
         this.tags = this.props.tags;
-        this.folderE = React.createRef();
     }
-    // function that changes selection based on given tag
+    // function that updates child tags/folders based on selection change
     onTagSelectionChange = () => {
-        this.folderE.current.fToggleDisplay();
+        const hiddenParents = getHiddenParents(this.tags);
+        if (hiddenParents !== null) {
+            for (var i = 0; i < hiddenParents.length; ++i) {
+                const myChildren = getImmediateChildren(hiddenParents[i], this.tags);
+                if (myChildren !== null) {
+                    for (var j = 0; j < myChildren.length; ++j) {
+                        myChildren[j].toggleDisplay();
+                        console.log(myChildren[j]);
+                    }
+                }
+            }
+        }
     }
     render() {
         // Map each folder name to a folder
         const folders = this.props.tags.map((tag) => 
-          <Folder ref={this.folderE} name={tag.name} display={tag.display} onClick={this.onTagSelectionChange} />);
+          <Folder tag={tag} onClick={this.onTagSelectionChange} />);
         return(
           <div className="folderlist">
             <div className="fl-title">Folder List</div>
